@@ -27,7 +27,9 @@ struct LightProbes {
     init(device: MTLDevice, library: ShaderLibrary, queue: MTLCommandQueue) throws {
         environment = try Self.cube(device, size: Self.environmentSize, levels: RenderTargets.levels(for: Self.environmentSize), "environment")
         irradiance = try Self.cube(device, size: Self.irradianceSize, levels: 1, "irradiance")
-        prefiltered = try Self.cube(device, size: Self.prefilteredSize, levels: Self.prefilteredLevels, "prefiltered environment")
+        // A local constant, so that the closure below does not capture self before it is whole.
+        let prefiltered = try Self.cube(device, size: Self.prefilteredSize, levels: Self.prefilteredLevels, "prefiltered environment")
+        self.prefiltered = prefiltered
         environmentLayers = try Self.layers(of: environment, level: 0)
         irradianceLayers = try Self.layers(of: irradiance, level: 0)
         prefilteredLayers = try (0..<Self.prefilteredLevels).map { try Self.layers(of: prefiltered, level: $0) }

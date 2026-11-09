@@ -29,12 +29,29 @@ esac
 
 swift build -c release --product "$EXECUTABLE"
 BIN="$(swift build -c release --show-bin-path)"
+if [ ! -x "$BIN/$EXECUTABLE" ]; then
+    BIN=".build/out/Products/Release" # where the newer build system of the package manager puts it
+fi
+if [ ! -x "$BIN/$EXECUTABLE" ]; then
+    echo "The built program is not in $BIN" >&2
+    exit 1
+fi
+# The shaders and the icon: the resource bundle, named after the package and the target.
+RESOURCES=""
+for bundle in "$BIN"/*_"$EXECUTABLE".bundle; do
+    if [ -d "$bundle" ]; then
+        RESOURCES="$bundle"
+    fi
+done
+if [ -z "$RESOURCES" ]; then
+    echo "The resource bundle is not in $BIN" >&2
+    exit 1
+fi
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/$EXECUTABLE" "$APP/Contents/MacOS/$EXECUTABLE"
-# The shaders and the icon, where the game looks for them.
-cp -R "$BIN/${EXECUTABLE}_${EXECUTABLE}.bundle" "$APP/Contents/Resources/"
+cp -RL "$RESOURCES" "$APP/Contents/Resources/"
 
 # The icon of the application, in the sizes macOS asks for.
 ICONSET="build/$EXECUTABLE.iconset"
